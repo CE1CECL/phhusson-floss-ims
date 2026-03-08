@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 package me.phh.ims
 
 import android.annotation.SuppressLint
@@ -16,8 +16,8 @@ import android.telephony.SmsMessage
 import android.telephony.TelephonyManager
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import java.net.*
 import me.phh.sip.*
+import java.net.*
 
 class MainActivity : AppCompatActivity() {
     var ref: IkeSession? = null
@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
                     Rlog.d("PHH", "Got network available $n")
                     network = n
                 }
-            }
+            },
         )
 
         val mcc = tm.simOperator.substring(0 until 3)
@@ -50,33 +50,36 @@ class MainActivity : AppCompatActivity() {
         // paramsBuilder.setDscp(26)
         ikeParamsBuilder.setServerHostname("epdg.epc.mnc$mnc.mcc$mcc.pub.3gppnetwork.org")
         ikeParamsBuilder.setLocalIdentification(
-            IkeRfc822AddrIdentification("0$imsi@nai.epc.mnc$mnc.mcc$mcc.pub.3gppnetwork.org")
+            IkeRfc822AddrIdentification("0$imsi@nai.epc.mnc$mnc.mcc$mcc.pub.3gppnetwork.org"),
         )
         ikeParamsBuilder.setRemoteIdentification(IkeFqdnIdentification("ims"))
         ikeParamsBuilder.setAuthEap(
             null,
-            EapSessionConfig.Builder()
+            EapSessionConfig
+                .Builder()
                 .setEapAkaConfig(1, TelephonyManager.APPTYPE_USIM)
                 .setEapIdentity("0$imsi@nai.epc.mnc$mnc.mcc$mcc.pub.3gppnetwork.org".toByteArray())
-                .build()
+                .build(),
         )
         // This SA proposal works on Bouygues telecom 208 20
         ikeParamsBuilder.addIkeSaProposal(
-            IkeSaProposal.Builder()
+            IkeSaProposal
+                .Builder()
                 .addDhGroup(SaProposal.DH_GROUP_2048_BIT_MODP)
                 .addEncryptionAlgorithm(SaProposal.ENCRYPTION_ALGORITHM_AES_CBC, 256)
                 .addIntegrityAlgorithm(SaProposal.INTEGRITY_ALGORITHM_HMAC_SHA2_256_128)
                 .addPseudorandomFunction(SaProposal.PSEUDORANDOM_FUNCTION_SHA2_256)
-                .build()
+                .build(),
         )
         // This SA proposal works on Free Mobile 208 15
         ikeParamsBuilder.addIkeSaProposal(
-            IkeSaProposal.Builder()
+            IkeSaProposal
+                .Builder()
                 .addDhGroup(SaProposal.DH_GROUP_1024_BIT_MODP)
                 .addEncryptionAlgorithm(SaProposal.ENCRYPTION_ALGORITHM_AES_CBC, 128)
                 .addIntegrityAlgorithm(SaProposal.INTEGRITY_ALGORITHM_HMAC_SHA1_96)
                 .addPseudorandomFunction(SaProposal.PSEUDORANDOM_FUNCTION_HMAC_SHA1)
-                .build()
+                .build(),
         )
         // paramsBuilder.setNetwork()
         ikeParamsBuilder.addIkeOption(IkeSessionParams.IKE_OPTION_ACCEPT_ANY_REMOTE_ID)
@@ -105,10 +108,11 @@ class MainActivity : AppCompatActivity() {
         )*/
         // This child SA proposal works on Free Mobile 208 15
         childParamsBuilder.addChildSaProposal(
-            ChildSaProposal.Builder()
+            ChildSaProposal
+                .Builder()
                 .addEncryptionAlgorithm(SaProposal.ENCRYPTION_ALGORITHM_AES_CBC, 128)
                 .addIntegrityAlgorithm(SaProposal.INTEGRITY_ALGORITHM_HMAC_SHA1_96)
-                .build()
+                .build(),
         )
         // set child lifetime
         // set handover infos (original ipv4/ipv6)
@@ -123,7 +127,7 @@ class MainActivity : AppCompatActivity() {
             "createIpSecTunnelInterface",
             InetAddress::class.java,
             InetAddress::class.java,
-            Network::class.java
+            Network::class.java,
         )
 
         val handlerThread = HandlerThread("PHH IMS").also { it.start() }
@@ -146,14 +150,14 @@ class MainActivity : AppCompatActivity() {
                                     Rlog.d("PHH", "Executor failed with", t)
                                 }
                             }
-                        }
+                        },
                     )
                 },
                 object : IkeSessionCallback {
                     override fun onOpened(p0: IkeSessionConfiguration) {
                         Rlog.d(
                             "PHH",
-                            "IKE session opened ${p0.ikeSessionConnectionInfo.localAddress} ${p0.ikeSessionConnectionInfo.remoteAddress}"
+                            "IKE session opened ${p0.ikeSessionConnectionInfo.localAddress} ${p0.ikeSessionConnectionInfo.remoteAddress}",
                         )
                         Rlog.d("PHH", "Bound network is ${nm.boundNetworkForProcess}")
                         ipsecTunnel =
@@ -162,13 +166,12 @@ class MainActivity : AppCompatActivity() {
                                     "createIpSecTunnelInterface",
                                     InetAddress::class.java,
                                     InetAddress::class.java,
-                                    Network::class.java
-                                )
-                                .invoke(
+                                    Network::class.java,
+                                ).invoke(
                                     ipsecManager,
                                     p0.ikeSessionConnectionInfo.localAddress,
                                     p0.ikeSessionConnectionInfo.remoteAddress,
-                                    network
+                                    network,
                                 ) as Object
 
                         val _pcscf =
@@ -190,7 +193,8 @@ class MainActivity : AppCompatActivity() {
                                 as List<LinkAddress>
                         Rlog.d("PHH", "IKE child session opened $p0 ${internalAddress.toList()}")
                         for (addr in internalAddress) {
-                            Class.forName("android.net.IpSecManager\$IpSecTunnelInterface")
+                            Class
+                                .forName("android.net.IpSecManager\$IpSecTunnelInterface")
                                 .getMethod("addAddress", InetAddress::class.java, Int::class.java)
                                 .invoke(ipsecTunnel, addr.address, addr.prefixLength)
                         }
@@ -198,7 +202,7 @@ class MainActivity : AppCompatActivity() {
 
                         Rlog.d(
                             "PHH",
-                            "VoWifi tunnel ready at interface ${ipsecTunnel!!.javaClass.getMethod("getInterfaceName")}"
+                            "VoWifi tunnel ready at interface ${ipsecTunnel!!.javaClass.getMethod("getInterfaceName")}",
                         )
 
                         /*
@@ -292,7 +296,10 @@ class MainActivity : AppCompatActivity() {
                         Rlog.d("PHH", "IKE child session closed")
                     }
 
-                    override fun onIpSecTransformCreated(p0: IpSecTransform, p1: Int) {
+                    override fun onIpSecTransformCreated(
+                        p0: IpSecTransform,
+                        p1: Int,
+                    ) {
                         Rlog.d("PHH", "IPSec session created $p0 $p1")
 
                         ipsecManager.javaClass
@@ -300,15 +307,17 @@ class MainActivity : AppCompatActivity() {
                                 "applyTunnelModeTransform",
                                 Class.forName("android.net.IpSecManager\$IpSecTunnelInterface"),
                                 Int::class.java,
-                                IpSecTransform::class.java
-                            )
-                            .invoke(ipsecManager, ipsecTunnel, p1, p0)
+                                IpSecTransform::class.java,
+                            ).invoke(ipsecManager, ipsecTunnel, p1, p0)
                     }
 
-                    override fun onIpSecTransformDeleted(p0: IpSecTransform, p1: Int) {
+                    override fun onIpSecTransformDeleted(
+                        p0: IpSecTransform,
+                        p1: Int,
+                    ) {
                         Rlog.d("PHH", "IPSec session deleted $p0 $p1")
                     }
-                }
+                },
             )
     }
 
@@ -319,6 +328,7 @@ class MainActivity : AppCompatActivity() {
             status.text = str + "\n" + status.text
         }
     }
+
     /*
         if (false) {
             val targetPhoneNumber = "XXXXXXX"
@@ -351,8 +361,12 @@ class MainActivity : AppCompatActivity() {
             """.trimIndent()
 
             updateStatus("Sending SMS")
-    */
-    fun encodeSms(scAddress: String, destinationAddress: String, message: String): ByteArray? {
+     */
+    fun encodeSms(
+        scAddress: String,
+        destinationAddress: String,
+        message: String,
+    ): ByteArray? {
         val t = SmsMessage.getSubmitPdu(scAddress, destinationAddress, message, false)
         val pdu = t.encodedMessage
         val headerSize = 3
@@ -391,7 +405,7 @@ class MainActivity : AppCompatActivity() {
         val msg = SmsMessage.createFromPdu((listOf(0.toByte()) + currentMsg).toByteArray())
         Rlog.d(
             "PHH",
-            "Received SMS from ${msg.originatingAddress} also ${msg.displayOriginatingAddress} val ${msg.messageBody}"
+            "Received SMS from ${msg.originatingAddress} also ${msg.displayOriginatingAddress} val ${msg.messageBody}",
         )
         updateStatus("Received SMS from ${msg.displayOriginatingAddress} val ${msg.messageBody}")
     }
